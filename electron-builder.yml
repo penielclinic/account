@@ -1,0 +1,30 @@
+appId: church.haeundae.eum.accounting
+productName: 이음 회계
+copyright: Copyright © 2026 해운대순복음교회
+
+directories:
+  output: dist
+  buildResources: build
+
+files:
+  - .electron/**/*
+  - out/**/*
+  - package.json
+
+win:
+  target:
+    - target: nsis
+      arch: x64
+  icon: build/icon.ico
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  installerLanguages:
+    - ko
+  language: 1042
+
+publish:
+  provider: github
+  owner: haeundae-church
+  repo: eum-accounting
