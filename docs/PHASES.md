@@ -16,13 +16,13 @@
 - [ ] Supabase에 `accounting` 스키마 생성
 - [ ] 계정과목 표준안 확정 (재무 담당자 + 시무장로 검토)
 - [ ] GitHub repo 생성 (`eum-accounting`)
-- [ ] `package.json` 초기화 + 의존성 설치
-- [ ] Electron + Next.js 14 보일러플레이트 셋업
+- [x] `package.json` 초기화 + 의존성 설치 ✅ 2026-05-22
+- [x] Electron + Next.js 14 보일러플레이트 셋업 ✅ 2026-05-22
 - [ ] 이음 플랫폼 Supabase 프로젝트 ID, anon key 환경변수 설정
 - [ ] 박경원 장로 GitHub 협업자 등록
 - [ ] 최근 12개월 엑셀 회계 데이터 샘플 5개 수집 (테스트용)
-- [ ] `tailwind.config.ts` — 이음 디자인 토큰 import
-- [ ] 첫 커밋: "chore: initial project scaffold"
+- [x] `tailwind.config.ts` — 이음 디자인 토큰 import ✅ 2026-05-22
+- [x] 첫 커밋: "chore: initial project scaffold" ✅ 2026-05-22 (043d9b1)
 
 **완료 조건**: `npm run dev`로 Electron 빈 창이 열리면 통과
 
