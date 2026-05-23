@@ -5,7 +5,7 @@
 
 ---
 
-## 현재 단계: **Phase 0 — 사전 준비** 🚀
+## 현재 단계: **Phase 2 — 입력 방식 확장** 🚀
 
 ---
 
@@ -33,32 +33,32 @@
 **목표**: 수동 입력으로 기본 회계 기능 작동
 
 ### 데이터베이스
-- [ ] `accounting.transactions` 테이블 생성 (거래내역)
-- [ ] `accounting.accounts` 테이블 생성 (계정과목)
-- [ ] `accounting.budgets` 테이블 생성 (예산)
-- [ ] `accounting.attachments` 테이블 생성 (첨부파일)
-- [ ] `accounting.audit_logs` 테이블 생성 (변경 이력)
-- [ ] `accounting.user_roles` 테이블 생성 (회계 모듈 권한)
-- [ ] `accounting.ai_queries` 테이블 생성 (AI 질의 로그)
-- [ ] RLS 정책 작성 (4개 역할별)
-- [ ] audit_logs 자동 기록 trigger 작성
-- [ ] 계정과목 시드 데이터 INSERT (`supabase/seed.sql`)
+- [x] `accounting.transactions` 테이블 생성 (거래내역) ✅ 2026-05-23
+- [x] `accounting.accounts` 테이블 생성 (계정과목) ✅ 2026-05-23
+- [x] `accounting.budgets` 테이블 생성 (예산) ✅ 2026-05-23
+- [x] `accounting.attachments` 테이블 생성 (첨부파일) ✅ 2026-05-23
+- [x] `accounting.audit_logs` 테이블 생성 (변경 이력) ✅ 2026-05-23
+- [x] `accounting.user_roles` 테이블 생성 (회계 모듈 권한) ✅ 2026-05-23
+- [x] `accounting.ai_queries` 테이블 생성 (AI 질의 로그) ✅ 2026-05-23
+- [x] RLS 정책 작성 (4개 역할별) ✅ 2026-05-23
+- [x] audit_logs 자동 기록 trigger 작성 ✅ 2026-05-23
+- [x] 계정과목 시드 데이터 INSERT (`supabase/seed.sql`) ✅ 2026-05-23
 
 ### 인증 / 권한
-- [ ] Supabase Auth 연동 (이메일/비밀번호)
-- [ ] 로그인 화면 (`/login`)
+- [x] Supabase Auth 연동 (이메일/비밀번호) ✅ 2026-05-23
+- [x] 로그인 화면 (`/login`) ✅ 2026-05-23 (스텁)
 - [ ] 회계 권한 없는 사용자는 로그인 후 차단 (403)
 - [ ] 역할별 라우팅 가드
 
 ### 수동 입력 + 기본 화면
-- [ ] 사이드바 네비게이션 (8개 메뉴)
-- [ ] 대시보드 빈 껍데기 (`/`)
-- [ ] 거래 입력 — 수동 폼 (`/transactions/new`)
-- [ ] 거래 목록 화면 (`/transactions`)
-- [ ] 계정과목 관리 화면 (`/accounts`)
-- [ ] 단축키 지원 (Ctrl+N, Ctrl+S)
+- [x] 사이드바 네비게이션 (8개 메뉴) ✅ 2026-05-22
+- [x] 대시보드 실데이터 KPI 4개 + 최근 거래 5건 ✅ 2026-05-23
+- [x] 거래 입력 — 수동 폼 (`/transactions/new`) ✅ 2026-05-23
+- [x] 거래 목록 화면 (`/transactions`) ✅ 2026-05-23
+- [x] 계정과목 관리 화면 (`/accounts`) ✅ 2026-05-23
+- [x] 단축키 지원 (Ctrl+S) ✅ 2026-05-23
 
-**완료 조건**: 재무 담당자가 수동으로 거래 50건 입력하고 목록에서 확인 가능
+**완료 조건**: 재무 담당자가 수동으로 거래 50건 입력하고 목록에서 확인 가능 ✅ **Phase 1 완료**
 
 ---
 
@@ -67,17 +67,18 @@
 **목표**: 5가지 입력 방식 모두 작동
 
 ### AI 입력
-- [ ] Claude API 클라이언트 (`src/lib/claude/`)
-- [ ] 영수증 사진 OCR — Vision API (`ReceiptOCR.tsx`)
-- [ ] PDF 파일 입력 — document content type (`PDFUpload.tsx`)
-- [ ] 음성 입력 — Web Speech API + Claude 파싱 (`VoiceInput.tsx`)
-- [ ] 추출 결과 검토·확정 화면
+- [x] Claude API 클라이언트 (`src/lib/claude/`) ✅ 2026-05-22 (스텁)
+- [x] 영수증 사진 OCR — Vision API (`ReceiptOCR.tsx`) ✅ 2026-05-23
+- [x] PDF 파일 입력 — document content type (`PDFUpload.tsx`) ✅ 2026-05-23
+- [ ] 음성 입력 — Web Speech API + Claude 파싱 (`VoiceInput.tsx`) — Phase 3으로 이월
+- [x] 추출 결과 검토·확정 화면 ✅ 2026-05-23
+- [x] 거래 입력 탭 UI (수동/OCR/CSV/PDF 4탭) ✅ 2026-05-23
 
 ### 은행 CSV
-- [ ] 국민·우리·신한 CSV 포맷 파서
-- [ ] 거래처명 → 계정과목 자동 추천 (Claude API)
+- [x] 국민·우리·신한 CSV 포맷 파서 ✅ 2026-05-23 (유연한 컬럼 자동감지)
+- [x] 거래처명 → 계정과목 자동 추천 (Claude API) ✅ 2026-05-23
 - [ ] 중복 거래 감지 (날짜+금액+계좌 기준)
-- [ ] 일괄 가져오기 UI
+- [x] 일괄 가져오기 UI ✅ 2026-05-23
 
 ### 이음 플랫폼 연동
 - [ ] `src/lib/eum/members.ts` — 성도 검색 클라이언트

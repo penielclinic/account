@@ -1,6 +1,61 @@
 import { ipcMain, dialog, app } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import Anthropic from '@anthropic-ai/sdk';
+
+interface OcrResult {
+  date: string | null;
+  amount: number | null;
+  vendor: string | null;
+  items: string[];
+  rawText: string;
+  confidence: number;
+}
+
+interface ClassifyRow {
+  description: string;
+  amount: number;
+  type: 'income' | 'expense';
+}
+
+interface AccountInfo {
+  code: string;
+  name: string;
+  type: 'income' | 'expense';
+}
+
+interface ClassifyResult {
+  accountCode: string;
+  confidence: number;
+}
+
+function getAnthropicClient(): Anthropic {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      'Anthropic API 키가 설정되지 않았습니다.\n.env.local 파일에 ANTHROPIC_API_KEY를 추가하세요.'
+    );
+  }
+  return new Anthropic({ apiKey });
+}
+
+function parseOcrJson(text: string): OcrResult {
+  const json = text.replace(/```json\n?|\n?```/g, '').trim();
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(json) as Record<string, unknown>;
+  } catch {
+    parsed = {};
+  }
+  return {
+    date: typeof parsed.date === 'string' ? parsed.date : null,
+    amount: typeof parsed.amount === 'number' ? parsed.amount : null,
+    vendor: typeof parsed.vendor === 'string' ? parsed.vendor : null,
+    items: Array.isArray(parsed.items) ? (parsed.items as string[]) : [],
+    rawText: typeof parsed.rawText === 'string' ? parsed.rawText : '',
+    confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0,
+  };
+}
 
 export function setupIpcHandlers(): void {
   ipcMain.handle('file:open-receipt', async () => {
@@ -20,6 +75,174 @@ export function setupIpcHandlers(): void {
 
     return { path: filePath, data: buffer.toString('base64'), ext };
   });
+
+  ipcMain.handle(
+    'claude:ocr-image',
+    async (
+      _event,
+      base64Data: string,
+      mimeType: 'image/jpeg' | 'image/png' | 'image/webp'
+    ): Promise<OcrResult> => {
+      const client = getAnthropicClient();
+      const response = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: { type: 'base64', media_type: mimeType, data: base64Data },
+              },
+              {
+                type: 'text',
+                text: `이 영수증에서 다음 정보를 JSON으로 추출하세요.
+- date: 거래 날짜 (YYYY-MM-DD, 2자리 연도면 20xx 변환, 없으면 null)
+- amount: 최종 결제 금액 (숫자, 원 단위, 없으면 null)
+- vendor: 상호명 또는 거래처명 (없으면 null)
+- items: 품목 목록 (문자열 배열)
+- rawText: 영수증 전체 텍스트
+- confidence: 추출 신뢰도 (0.0~1.0)
+
+코드 블록 없이 순수 JSON만 반환하세요.`,
+              },
+            ],
+          },
+        ],
+      });
+
+      const text =
+        response.content[0].type === 'text' ? response.content[0].text : '{}';
+      return parseOcrJson(text);
+    }
+  );
+
+  ipcMain.handle(
+    'claude:ocr-pdf',
+    async (_event, base64Data: string): Promise<OcrResult[]> => {
+      const client = getAnthropicClient();
+      const response = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2048,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'document',
+                source: {
+                  type: 'base64',
+                  media_type: 'application/pdf',
+                  data: base64Data,
+                },
+              } as unknown as Anthropic.TextBlockParam,
+              {
+                type: 'text',
+                text: `이 PDF에서 거래 내역을 모두 추출해 JSON 배열로 반환하세요.
+각 거래마다:
+- date: YYYY-MM-DD
+- amount: 금액 (숫자, 원 단위)
+- vendor: 상호명 (없으면 null)
+- items: 품목 (문자열 배열)
+- rawText: 해당 거래 원문
+- confidence: 신뢰도 (0~1)
+
+코드 블록 없이 순수 JSON 배열만 반환하세요.`,
+              },
+            ],
+          },
+        ],
+      });
+
+      const text =
+        response.content[0].type === 'text' ? response.content[0].text : '[]';
+      const cleaned = text.replace(/```json\n?|\n?```/g, '').trim();
+      try {
+        const arr = JSON.parse(cleaned) as unknown[];
+        return arr.map((item) => {
+          const r = item as Record<string, unknown>;
+          return {
+            date: typeof r.date === 'string' ? r.date : null,
+            amount: typeof r.amount === 'number' ? r.amount : null,
+            vendor: typeof r.vendor === 'string' ? r.vendor : null,
+            items: Array.isArray(r.items) ? (r.items as string[]) : [],
+            rawText: typeof r.rawText === 'string' ? r.rawText : '',
+            confidence: typeof r.confidence === 'number' ? r.confidence : 0,
+          };
+        });
+      } catch {
+        return [];
+      }
+    }
+  );
+
+  ipcMain.handle(
+    'claude:classify-transactions',
+    async (
+      _event,
+      rows: ClassifyRow[],
+      accounts: AccountInfo[]
+    ): Promise<ClassifyResult[]> => {
+      const client = getAnthropicClient();
+
+      const incomeList = accounts
+        .filter((a) => a.type === 'income')
+        .map((a) => `  ${a.code}: ${a.name}`)
+        .join('\n');
+      const expenseList = accounts
+        .filter((a) => a.type === 'expense')
+        .map((a) => `  ${a.code}: ${a.name}`)
+        .join('\n');
+
+      const rowsText = rows
+        .map(
+          (r, i) =>
+            `${i}: ${r.type === 'income' ? '수입' : '지출'} ${r.amount.toLocaleString()}원 "${r.description}"`
+        )
+        .join('\n');
+
+      const response = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2048,
+        messages: [
+          {
+            role: 'user',
+            content: `교회 회계 시스템에서 은행 거래의 계정과목을 분류하세요.
+
+[수입 계정과목]
+${incomeList}
+
+[지출 계정과목]
+${expenseList}
+
+[분류할 거래 (번호: 구분 금액 "내용")]
+${rowsText}
+
+각 번호에 맞는 계정과목 코드와 신뢰도를 JSON 배열로 반환하세요.
+형식: [{"accountCode":"4100","confidence":0.9}, ...]
+번호 순서를 유지하고, 코드 블록 없이 순수 JSON만 반환하세요.`,
+          },
+        ],
+      });
+
+      const text =
+        response.content[0].type === 'text' ? response.content[0].text : '[]';
+      const cleaned = text.replace(/```json\n?|\n?```/g, '').trim();
+      try {
+        const arr = JSON.parse(cleaned) as unknown[];
+        return arr.map((item) => {
+          const r = item as Record<string, unknown>;
+          return {
+            accountCode: typeof r.accountCode === 'string' ? r.accountCode : '',
+            confidence: typeof r.confidence === 'number' ? r.confidence : 0,
+          };
+        });
+      } catch {
+        return rows.map(() => ({ accountCode: '', confidence: 0 }));
+      }
+    }
+  );
 
   ipcMain.handle('file:save-report', async (_event, data: Buffer, filename: string) => {
     const ext = path.extname(filename).slice(1).toLowerCase();
@@ -41,13 +264,7 @@ export function setupIpcHandlers(): void {
     return true;
   });
 
-  // Phase 5 구현 예정
   ipcMain.handle('db:backup', async () => false);
-
-  // Phase 5 구현 예정
   ipcMain.handle('app:check-update', async () => null);
-
-  ipcMain.handle('app:quit', () => {
-    app.quit();
-  });
+  ipcMain.handle('app:quit', () => { app.quit(); });
 }

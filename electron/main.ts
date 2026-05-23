@@ -1,5 +1,8 @@
-import { app, BrowserWindow } from 'electron';
+import * as dotenv from 'dotenv';
 import * as path from 'path';
+dotenv.config({ path: path.join(process.cwd(), '.env.local') });
+
+import { app, BrowserWindow } from 'electron';
 import { setupIpcHandlers } from './ipc-handlers';
 
 // Windows 환경에서 GPU 프로세스 크래시 방지

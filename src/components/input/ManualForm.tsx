@@ -103,14 +103,17 @@ export default function ManualForm() {
 
     try {
       await create.mutateAsync({
-        transaction_date: parsed.data.transaction_date,
-        type: parsed.data.type,
-        account_id: parsed.data.account_id,
-        amount: parsed.data.amount,
-        description: parsed.data.description,
-        vendor: parsed.data.vendor ?? null,
-        payment_method: parsed.data.payment_method ?? null,
-        memo: parsed.data.memo ?? null,
+        input: {
+          transaction_date: parsed.data.transaction_date,
+          type: parsed.data.type,
+          account_id: parsed.data.account_id,
+          amount: parsed.data.amount,
+          description: parsed.data.description,
+          vendor: parsed.data.vendor ?? null,
+          payment_method: parsed.data.payment_method ?? null,
+          memo: parsed.data.memo ?? null,
+        },
+        inputMethod: 'manual',
       });
       toast.success('거래가 저장되었습니다');
       router.push('/transactions/');

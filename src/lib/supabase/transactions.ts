@@ -48,14 +48,33 @@ export interface CreateTransactionInput {
   memo?: string | null;
 }
 
-export async function createTransaction(input: CreateTransactionInput): Promise<Transaction> {
+export async function createTransaction(
+  input: CreateTransactionInput,
+  inputMethod: 'manual' | 'receipt_ocr' | 'bank_csv' | 'pdf' = 'manual'
+): Promise<Transaction> {
   const { data, error } = await accountingClient
     .from('transactions')
-    .insert({ ...input, input_method: 'manual', status: 'recorded' })
+    .insert({ ...input, input_method: inputMethod, status: 'recorded' })
     .select()
     .single();
   if (error) throw new Error(error.message);
   return data;
+}
+
+export async function createTransactionsBatch(
+  inputs: CreateTransactionInput[],
+  inputMethod: 'manual' | 'receipt_ocr' | 'bank_csv' | 'pdf' = 'bank_csv'
+): Promise<number> {
+  const rows = inputs.map((input) => ({
+    ...input,
+    input_method: inputMethod,
+    status: 'recorded',
+  }));
+  const { error, count } = await accountingClient
+    .from('transactions')
+    .insert(rows, { count: 'exact' });
+  if (error) throw new Error(error.message);
+  return count ?? inputs.length;
 }
 
 export interface DashboardStats {

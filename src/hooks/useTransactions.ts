@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getTransactions,
   createTransaction,
+  createTransactionsBatch,
   getDashboardStats,
   type TransactionFilters,
   type CreateTransactionInput,
@@ -26,7 +27,30 @@ export function useDashboardStats() {
 export function useCreateTransaction() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: CreateTransactionInput) => createTransaction(input),
+    mutationFn: ({
+      input,
+      inputMethod,
+    }: {
+      input: CreateTransactionInput;
+      inputMethod?: 'manual' | 'receipt_ocr' | 'bank_csv' | 'pdf';
+    }) => createTransaction(input, inputMethod),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['transactions'] });
+      qc.invalidateQueries({ queryKey: ['dashboard-stats'] });
+    },
+  });
+}
+
+export function useCreateTransactionsBatch() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      inputs,
+      inputMethod,
+    }: {
+      inputs: CreateTransactionInput[];
+      inputMethod?: 'manual' | 'receipt_ocr' | 'bank_csv' | 'pdf';
+    }) => createTransactionsBatch(inputs, inputMethod),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['transactions'] });
       qc.invalidateQueries({ queryKey: ['dashboard-stats'] });
