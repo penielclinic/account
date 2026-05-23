@@ -2,6 +2,10 @@ import { app, BrowserWindow } from 'electron';
 import * as path from 'path';
 import { setupIpcHandlers } from './ipc-handlers';
 
+// Windows 환경에서 GPU 프로세스 크래시 방지
+app.commandLine.appendSwitch('--disable-gpu');
+app.commandLine.appendSwitch('--disable-software-rasterizer');
+
 const isDev = process.env.NODE_ENV === 'development';
 
 let mainWindow: BrowserWindow | null = null;

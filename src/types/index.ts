@@ -1,7 +1,7 @@
 // ─── 기본 열거형 ─────────────────────────────────────────────
 
 export type TransactionType = 'income' | 'expense';
-export type AccountType = 'revenue' | 'expense' | 'asset' | 'liability' | 'equity';
+export type AccountType = 'income' | 'expense';
 export type UserRole = 'finance_officer' | 'senior_pastor' | 'executive_elder' | 'auditor';
 export type TransactionStatus = 'recorded' | 'pending_approval' | 'approved' | 'rejected';
 export type InputMethod = 'manual' | 'receipt_ocr' | 'bank_csv' | 'voice' | 'pdf';

@@ -38,7 +38,49 @@
 
 ## 세션 로그 (최신순)
 
-<!-- ⚠️ 새 세션은 이 줄 바로 아래에 추가하세요-->
+<!-- ⚠️ 새 세션은 이 줄 바로 아래에 추가하세요 -->
+
+---
+
+## 2026-05-23 (세션 #2)
+
+**Phase**: Phase 0 — 사전 준비 (마무리)
+**작업자**: Claude Code (모델: claude-sonnet-4-6)
+**브랜치**: master
+
+### 작업한 것
+- Supabase `accounting` 스키마 및 테이블 7개 생성 (마이그레이션 적용)
+- 이음 플랫폼 스텁 테이블 생성 (`public.members`, `public.cells`, `public.missions`)
+- audit_logs 자동 기록 트리거 (`fn_audit_log`) 4개 테이블에 적용
+- RLS 정책 전체 테이블에 설정 (역할별 접근 제어)
+- 계정과목 시드 데이터 31개 삽입 (수입 9개, 지출 22개)
+- 관리자 계정 (`penielclinic@naver.com`) user_roles 등록
+- `.env.local` 환경변수 완성 (URL, anon key, service role key)
+- `npm run dev` 정상 실행 확인 (Phase 0 완료 조건 달성)
+- `AccountType` 타입 수정 (`'income' | 'expense'`) — DB와 일치
+
+### 변경된 파일
+- `docs/PHASES.md` (체크리스트 업데이트)
+- `src/types/index.ts` (AccountType 수정)
+- `supabase/seed.sql` (실제 적용된 데이터로 업데이트)
+- `package.json` (dev:electron 스크립트 수정)
+- `electron/main.ts` (GPU 크래시 방지 플래그 추가)
+
+### 의사결정
+- **이음 플랫폼 스텁**: `public.members/cells/missions`가 아직 없어 스텁으로 생성. 실제 이음 플랫폼 연동 시 DROP 후 실제 테이블로 교체
+- **계정과목 코드 체계**: 4xxx = 수입, 5xxx = 지출 (표준 교회 회계 코드 기준)
+
+### 다음 세션에서 이어서 할 일
+- **Phase 1 시작**: GitHub repo 생성 → `git remote add origin` → push
+- 계정과목 표준안 재무 담당자 검토 (현재 초안 31개)
+- Phase 1 첫 기능: 사이드바 네비게이션 + 거래 수동 입력 폼 (`ManualForm.tsx`)
+
+### 차단 사항 / 원장님 확인 필요
+- 계정과목 코드/이름 최종 확정 필요 (현재 초안)
+- GitHub 조직/개인 계정 이름 확인 필요 (`electron-builder.yml` owner 수정)
+
+### 박경원 장로 리뷰 요청 사항
+- 없음 (Phase 0 완료, Phase 1 PR부터 리뷰 요청 예정)
 
 ---
 

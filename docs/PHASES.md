@@ -13,12 +13,12 @@
 
 **목표**: 개발 환경 셋업 + 의사결정 사항 확정
 
-- [ ] Supabase에 `accounting` 스키마 생성
-- [ ] 계정과목 표준안 확정 (재무 담당자 + 시무장로 검토)
+- [x] Supabase에 `accounting` 스키마 생성 ✅ 2026-05-23 (7개 테이블 + RLS + 트리거)
+- [ ] 계정과목 표준안 확정 (재무 담당자 + 시무장로 검토) — 초안 31개 적용됨
 - [ ] GitHub repo 생성 (`eum-accounting`)
 - [x] `package.json` 초기화 + 의존성 설치 ✅ 2026-05-22
 - [x] Electron + Next.js 14 보일러플레이트 셋업 ✅ 2026-05-22
-- [ ] 이음 플랫폼 Supabase 프로젝트 ID, anon key 환경변수 설정
+- [x] 이음 플랫폼 Supabase 프로젝트 ID, anon key 환경변수 설정 ✅ 2026-05-22
 - [ ] 박경원 장로 GitHub 협업자 등록
 - [ ] 최근 12개월 엑셀 회계 데이터 샘플 5개 수집 (테스트용)
 - [x] `tailwind.config.ts` — 이음 디자인 토큰 import ✅ 2026-05-22
