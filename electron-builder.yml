@@ -26,5 +26,5 @@ nsis:
 
 publish:
   provider: github
-  owner: haeundae-church
-  repo: eum-accounting
+  owner: penielclinic
+  repo: account
