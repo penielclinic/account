@@ -42,6 +42,63 @@
 
 ---
 
+## 2026-05-23 (세션 #3)
+
+**Phase**: Phase 1 — 핵심 기능 구현
+**작업자**: Claude Code (모델: claude-sonnet-4-6)
+**브랜치**: master
+
+### 작업한 것
+- `src/lib/supabase/accounting.ts` 신규 생성 — accounting 스키마 전용 Supabase 클라이언트
+- `src/lib/supabase/accounts.ts` 신규 생성 — `getAccounts()` (is_active 필터, code 정렬)
+- `src/lib/supabase/transactions.ts` 신규 생성 — `getTransactions()` (필터/페이지네이션), `createTransaction()`, `getDashboardStats()`
+- `src/hooks/useAccounts.ts` 신규 생성 — TanStack Query 훅 (staleTime 5분)
+- `src/hooks/useTransactions.ts` 신규 생성 — `useTransactions`, `useDashboardStats`, `useCreateTransaction` 훅
+- `src/components/input/ManualForm.tsx` 구현 — Zod 검증, Ctrl+S 단축키, 금액 천단위 포맷
+- `src/app/(dashboard)/transactions/page.tsx` 구현 — 필터(구분/계정/검색) + 페이지네이션 테이블
+- `src/app/(dashboard)/transactions/new/page.tsx` 구현 — ManualForm 래퍼 페이지
+- `src/app/(dashboard)/accounts/page.tsx` 구현 — 수입/지출 2컬럼 테이블
+- `src/app/(dashboard)/page.tsx` 구현 — 실데이터 KPI 카드 4개 + 최근 거래 5건
+- `.eslintrc.json` 신규 생성 — next/core-web-vitals 설정
+- `src/app/(dashboard)/ai-query/page.tsx` — 따옴표 이스케이프 수정 (ESLint)
+- TypeScript typecheck: 오류 없음 / ESLint: 오류 없음
+
+### 변경된 파일
+- `src/lib/supabase/accounting.ts` (신규)
+- `src/lib/supabase/accounts.ts` (신규)
+- `src/lib/supabase/transactions.ts` (신규)
+- `src/hooks/useAccounts.ts` (신규)
+- `src/hooks/useTransactions.ts` (신규)
+- `src/components/input/ManualForm.tsx` (수정 — 스텁 → 구현 완료)
+- `src/app/(dashboard)/transactions/page.tsx` (수정 — 스텁 → 구현 완료)
+- `src/app/(dashboard)/transactions/new/page.tsx` (수정 — 스텁 → 구현 완료)
+- `src/app/(dashboard)/accounts/page.tsx` (수정 — 스텁 → 구현 완료)
+- `src/app/(dashboard)/page.tsx` (수정 — 스텁 → 구현 완료)
+- `.eslintrc.json` (신규)
+- `src/app/(dashboard)/ai-query/page.tsx` (수정 — ESLint 수정)
+
+### 의사결정
+- **client component 전략**: `output: 'export'` 정적 앱이므로 데이터 페칭 페이지는 모두 `'use client'` + TanStack Query. `metadata` export는 client component와 공존 불가하므로 삭제
+- **ManualForm 금액**: 천 단위 comma 자동 포맷 적용, 저장 시 comma 제거 후 Number 변환
+- **Ctrl+S 단축키**: `useRef`로 최신 form 값 참조 → stale closure 방지
+- **에러 상태 UX**: Supabase schema 미노출 시 안내 메시지 포함 (`accounting` Exposed schemas 추가 안내)
+
+### 다음 세션에서 이어서 할 일
+- `npm run dev` 실행 후 실제 화면 동작 확인
+- Supabase `accounting` Exposed schemas 추가 여부 확인
+- Phase 2: OCR 영수증 입력 (ReceiptOCR.tsx)
+- Phase 2: 은행 CSV 업로드 (BankCSVUpload.tsx)
+- 예산 관리 페이지 (budgets/page.tsx)
+- GitHub push
+
+### 차단 사항 / 원장님 확인 필요
+- **[필수] Supabase Dashboard → Settings → API → Exposed schemas에 `accounting` 추가** (미설정 시 모든 DB 쿼리 실패)
+
+### 박경원 장로 리뷰 요청 사항
+- Phase 1 완료 후 PR 생성 예정 — ManualForm 입력 검증 로직, RLS 정책 적용 여부 확인 요청
+
+---
+
 ## 2026-05-23 (세션 #2)
 
 **Phase**: Phase 0 — 사전 준비 (마무리)
