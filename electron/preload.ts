@@ -9,8 +9,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     mimeType: 'image/jpeg' | 'image/png' | 'image/webp'
   ): Promise<{
     date: string | null;
+    time: string | null;
     amount: number | null;
     vendor: string | null;
+    vendorRegNumber: string | null;
+    vendorPhone: string | null;
+    cardCompany: string | null;
+    cardLast4: string | null;
     items: string[];
     rawText: string;
     confidence: number;
@@ -19,8 +24,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   ocrPdf: (base64: string): Promise<
     Array<{
       date: string | null;
+      time: string | null;
       amount: number | null;
       vendor: string | null;
+      vendorRegNumber: string | null;
+      vendorPhone: string | null;
+      cardCompany: string | null;
+      cardLast4: string | null;
       items: string[];
       rawText: string;
       confidence: number;

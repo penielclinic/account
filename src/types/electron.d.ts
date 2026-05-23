@@ -2,8 +2,13 @@ export {};
 
 interface OcrResult {
   date: string | null;
+  time: string | null;
   amount: number | null;
   vendor: string | null;
+  vendorRegNumber: string | null;
+  vendorPhone: string | null;
+  cardCompany: string | null;
+  cardLast4: string | null;
   items: string[];
   rawText: string;
   confidence: number;

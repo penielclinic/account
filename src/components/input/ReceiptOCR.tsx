@@ -14,14 +14,20 @@ interface OcrResult {
   date: string | null;
   amount: number | null;
   vendor: string | null;
+  vendorRegNumber: string | null;
   items: string[];
   confidence: number;
 }
 
 interface ReviewState {
   date: string;
+  time: string;
   amount: string;
   vendor: string;
+  vendorRegNumber: string;
+  vendorPhone: string;
+  cardCompany: string;
+  cardLast4: string;
   description: string;
   type: 'income' | 'expense';
   accountId: string;
@@ -58,8 +64,13 @@ export default function ReceiptOCR() {
   const [ocrResult, setOcrResult] = useState<OcrResult | null>(null);
   const [review, setReview] = useState<ReviewState>({
     date: new Date().toISOString().slice(0, 10),
+    time: '',
     amount: '',
     vendor: '',
+    vendorRegNumber: '',
+    vendorPhone: '',
+    cardCompany: '',
+    cardLast4: '',
     description: '',
     type: 'expense',
     accountId: '',
@@ -100,8 +111,13 @@ export default function ReceiptOCR() {
       setOcrResult(result);
       setReview({
         date: result.date ?? new Date().toISOString().slice(0, 10),
+        time: result.time ?? '',
         amount: result.amount ? result.amount.toLocaleString('ko-KR') : '',
         vendor: result.vendor ?? '',
+        vendorRegNumber: result.vendorRegNumber ?? '',
+        vendorPhone: result.vendorPhone ?? '',
+        cardCompany: result.cardCompany ?? '',
+        cardLast4: result.cardLast4 ?? '',
         description: result.vendor ? `${result.vendor} 구매` : '',
         type: 'expense',
         accountId: '',
@@ -124,11 +140,16 @@ export default function ReceiptOCR() {
       await create.mutateAsync({
         input: {
           transaction_date: review.date,
+          transaction_time: review.time || null,
           type: review.type,
           account_id: review.accountId,
           amount,
           description: review.description,
           vendor: review.vendor || null,
+          vendor_reg_number: review.vendorRegNumber || null,
+          vendor_phone: review.vendorPhone || null,
+          card_company: review.cardCompany || null,
+          card_last4: review.cardLast4 || null,
         },
         inputMethod: 'receipt_ocr',
       });
@@ -252,14 +273,23 @@ export default function ReceiptOCR() {
         </div>
       </div>
 
-      {/* 날짜 + 금액 */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* 날짜 + 시간 + 금액 */}
+      <div className="grid grid-cols-3 gap-3">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">날짜 *</label>
           <input
             type="date"
             value={review.date}
             onChange={(e) => setReviewField('date', e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">시간</label>
+          <input
+            type="time"
+            value={review.time}
+            onChange={(e) => setReviewField('time', e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -278,15 +308,65 @@ export default function ReceiptOCR() {
         </div>
       </div>
 
-      {/* 거래처 */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">거래처</label>
-        <input
-          type="text"
-          value={review.vendor}
-          onChange={(e) => setReviewField('vendor', e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+      {/* 거래처 정보 */}
+      <div className="border border-gray-100 rounded-xl p-4 space-y-3 bg-gray-50">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">거래처 정보</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">거래처명</label>
+            <input
+              type="text"
+              value={review.vendor}
+              onChange={(e) => setReviewField('vendor', e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">전화번호</label>
+            <input
+              type="tel"
+              value={review.vendorPhone}
+              onChange={(e) => setReviewField('vendorPhone', e.target.value)}
+              placeholder="02-0000-0000"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">사업자등록번호</label>
+          <input
+            type="text"
+            value={review.vendorRegNumber}
+            onChange={(e) => setReviewField('vendorRegNumber', e.target.value)}
+            placeholder="000-00-00000"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          />
+        </div>
+        {(review.cardCompany || review.cardLast4) && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">카드사</label>
+              <input
+                type="text"
+                value={review.cardCompany}
+                onChange={(e) => setReviewField('cardCompany', e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">카드번호 끝 4자리</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                value={review.cardLast4}
+                onChange={(e) => setReviewField('cardLast4', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                placeholder="1234"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white tracking-widest"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 계정과목 */}

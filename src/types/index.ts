@@ -11,12 +11,17 @@ export type InputMethod = 'manual' | 'receipt_ocr' | 'bank_csv' | 'voice' | 'pdf
 export interface Transaction {
   id: string;
   transaction_date: string;
+  transaction_time: string | null;
   type: TransactionType;
   account_id: string;
   amount: number;
   description: string;
   vendor: string | null;
+  vendor_reg_number: string | null;
+  vendor_phone: string | null;
   payment_method: string | null;
+  card_company: string | null;
+  card_last4: string | null;
   memo: string | null;
   related_member_id: string | null;
   related_cell_id: string | null;

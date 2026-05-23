@@ -5,8 +5,13 @@ import Anthropic from '@anthropic-ai/sdk';
 
 interface OcrResult {
   date: string | null;
+  time: string | null;
   amount: number | null;
   vendor: string | null;
+  vendorRegNumber: string | null;
+  vendorPhone: string | null;
+  cardCompany: string | null;
+  cardLast4: string | null;
   items: string[];
   rawText: string;
   confidence: number;
@@ -49,8 +54,13 @@ function parseOcrJson(text: string): OcrResult {
   }
   return {
     date: typeof parsed.date === 'string' ? parsed.date : null,
+    time: typeof parsed.time === 'string' ? parsed.time : null,
     amount: typeof parsed.amount === 'number' ? parsed.amount : null,
     vendor: typeof parsed.vendor === 'string' ? parsed.vendor : null,
+    vendorRegNumber: typeof parsed.vendorRegNumber === 'string' ? parsed.vendorRegNumber : null,
+    vendorPhone: typeof parsed.vendorPhone === 'string' ? parsed.vendorPhone : null,
+    cardCompany: typeof parsed.cardCompany === 'string' ? parsed.cardCompany : null,
+    cardLast4: typeof parsed.cardLast4 === 'string' ? parsed.cardLast4 : null,
     items: Array.isArray(parsed.items) ? (parsed.items as string[]) : [],
     rawText: typeof parsed.rawText === 'string' ? parsed.rawText : '',
     confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0,
@@ -99,8 +109,13 @@ export function setupIpcHandlers(): void {
                 type: 'text',
                 text: `이 영수증에서 다음 정보를 JSON으로 추출하세요.
 - date: 거래 날짜 (YYYY-MM-DD, 2자리 연도면 20xx 변환, 없으면 null)
+- time: 거래 시각 (HH:MM 24시간 형식, 없으면 null)
 - amount: 최종 결제 금액 (숫자, 원 단위, 없으면 null)
 - vendor: 상호명 또는 거래처명 (없으면 null)
+- vendorRegNumber: 사업자등록번호 (xxx-xx-xxxxx 형식, 없으면 null)
+- vendorPhone: 거래처 전화번호 (없으면 null)
+- cardCompany: 카드사명 (국민/신한/현대/삼성/롯데/하나/우리/BC 등, 없으면 null)
+- cardLast4: 카드번호 끝 4자리 (숫자 4자리 문자열, 없으면 null)
 - items: 품목 목록 (문자열 배열)
 - rawText: 영수증 전체 텍스트
 - confidence: 추출 신뢰도 (0.0~1.0)
@@ -164,8 +179,13 @@ export function setupIpcHandlers(): void {
           const r = item as Record<string, unknown>;
           return {
             date: typeof r.date === 'string' ? r.date : null,
+            time: typeof r.time === 'string' ? r.time : null,
             amount: typeof r.amount === 'number' ? r.amount : null,
             vendor: typeof r.vendor === 'string' ? r.vendor : null,
+            vendorRegNumber: typeof r.vendorRegNumber === 'string' ? r.vendorRegNumber : null,
+            vendorPhone: typeof r.vendorPhone === 'string' ? r.vendorPhone : null,
+            cardCompany: typeof r.cardCompany === 'string' ? r.cardCompany : null,
+            cardLast4: typeof r.cardLast4 === 'string' ? r.cardLast4 : null,
             items: Array.isArray(r.items) ? (r.items as string[]) : [],
             rawText: typeof r.rawText === 'string' ? r.rawText : '',
             confidence: typeof r.confidence === 'number' ? r.confidence : 0,

@@ -19,24 +19,39 @@ const schema = z.object({
     .min(1, '적요를 입력하세요')
     .max(200, '200자 이내로 입력하세요'),
   vendor: z.string().max(100).optional(),
+  vendor_reg_number: z.string().max(20).optional(),
+  vendor_phone: z.string().max(20).optional(),
   payment_method: z.string().optional(),
+  card_company: z.string().max(20).optional(),
+  card_last4: z
+    .string()
+    .regex(/^\d{4}$/, '숫자 4자리를 입력하세요')
+    .optional()
+    .or(z.literal('')),
   memo: z.string().max(500).optional(),
 });
 
 type FormState = {
   transaction_date: string;
+  transaction_time: string;
   type: 'income' | 'expense';
   account_id: string;
   amount: string;
   description: string;
   vendor: string;
+  vendor_reg_number: string;
+  vendor_phone: string;
   payment_method: string;
+  card_company: string;
+  card_last4: string;
   memo: string;
 };
 
 type FieldErrors = Partial<Record<keyof FormState, string>>;
 
 const PAYMENT_METHODS = ['현금', '계좌이체', '신용카드', '체크카드', '기타'];
+const CARD_COMPANIES = ['국민', '신한', '현대', '삼성', '롯데', '하나', '우리', 'BC', '농협', '씨티'];
+const CARD_METHODS = new Set(['신용카드', '체크카드']);
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -54,29 +69,37 @@ export default function ManualForm() {
 
   const [form, setForm] = useState<FormState>({
     transaction_date: todayStr(),
+    transaction_time: '',
     type: 'expense',
     account_id: '',
     amount: '',
     description: '',
     vendor: '',
+    vendor_reg_number: '',
+    vendor_phone: '',
     payment_method: '',
+    card_company: '',
+    card_last4: '',
     memo: '',
   });
   const [errors, setErrors] = useState<FieldErrors>({});
   const formRef = useRef(form);
   formRef.current = form;
 
-  const incomeAccounts = accounts.filter(a => a.type === 'income');
-  const expenseAccounts = accounts.filter(a => a.type === 'expense');
-  const filteredAccounts = form.type === 'income' ? incomeAccounts : expenseAccounts;
+  const isCardPayment = CARD_METHODS.has(form.payment_method);
+  const filteredAccounts = accounts.filter((a) => a.type === form.type);
 
   function set(key: keyof FormState, value: string) {
-    setForm(prev => {
+    setForm((prev) => {
       const next = { ...prev, [key]: value };
       if (key === 'type') next.account_id = '';
+      if (key === 'payment_method' && !CARD_METHODS.has(value)) {
+        next.card_company = '';
+        next.card_last4 = '';
+      }
       return next;
     });
-    setErrors(prev => ({ ...prev, [key]: undefined }));
+    setErrors((prev) => ({ ...prev, [key]: undefined }));
   }
 
   async function handleSubmit(e?: React.FormEvent) {
@@ -87,7 +110,11 @@ export default function ManualForm() {
       ...f,
       amount: f.amount ? Number(f.amount.replace(/,/g, '')) : undefined,
       vendor: f.vendor || undefined,
+      vendor_reg_number: f.vendor_reg_number || undefined,
+      vendor_phone: f.vendor_phone || undefined,
       payment_method: f.payment_method || undefined,
+      card_company: f.card_company || undefined,
+      card_last4: f.card_last4 || undefined,
       memo: f.memo || undefined,
     });
 
@@ -105,12 +132,17 @@ export default function ManualForm() {
       await create.mutateAsync({
         input: {
           transaction_date: parsed.data.transaction_date,
+          transaction_time: form.transaction_time || null,
           type: parsed.data.type,
           account_id: parsed.data.account_id,
           amount: parsed.data.amount,
           description: parsed.data.description,
           vendor: parsed.data.vendor ?? null,
+          vendor_reg_number: parsed.data.vendor_reg_number ?? null,
+          vendor_phone: parsed.data.vendor_phone ?? null,
           payment_method: parsed.data.payment_method ?? null,
+          card_company: parsed.data.card_company ?? null,
+          card_last4: parsed.data.card_last4 || null,
           memo: parsed.data.memo ?? null,
         },
         inputMethod: 'manual',
@@ -139,7 +171,7 @@ export default function ManualForm() {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">구분 *</label>
         <div className="flex gap-3">
-          {(['expense', 'income'] as const).map(t => (
+          {(['expense', 'income'] as const).map((t) => (
             <button
               key={t}
               type="button"
@@ -158,19 +190,28 @@ export default function ManualForm() {
         </div>
       </div>
 
-      {/* 날짜 + 금액 */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* 날짜 + 시간 + 금액 */}
+      <div className="grid grid-cols-3 gap-3">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">날짜 *</label>
           <input
             type="date"
             value={form.transaction_date}
-            onChange={e => set('transaction_date', e.target.value)}
+            onChange={(e) => set('transaction_date', e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {errors.transaction_date && (
             <p className="text-red-500 text-xs mt-1">{errors.transaction_date}</p>
           )}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">시간</label>
+          <input
+            type="time"
+            value={form.transaction_time}
+            onChange={(e) => set('transaction_time', e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">금액 *</label>
@@ -179,7 +220,7 @@ export default function ManualForm() {
               type="text"
               inputMode="numeric"
               value={form.amount}
-              onChange={e => set('amount', formatAmount(e.target.value))}
+              onChange={(e) => set('amount', formatAmount(e.target.value))}
               placeholder="0"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-7"
             />
@@ -196,12 +237,12 @@ export default function ManualForm() {
         <label className="block text-sm font-medium text-gray-700 mb-1">계정과목 *</label>
         <select
           value={form.account_id}
-          onChange={e => set('account_id', e.target.value)}
+          onChange={(e) => set('account_id', e.target.value)}
           disabled={accountsLoading}
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
         >
           <option value="">선택하세요</option>
-          {filteredAccounts.map(a => (
+          {filteredAccounts.map((a) => (
             <option key={a.id} value={a.id}>
               {a.code} {a.name}
             </option>
@@ -218,7 +259,7 @@ export default function ManualForm() {
         <input
           type="text"
           value={form.description}
-          onChange={e => set('description', e.target.value)}
+          onChange={(e) => set('description', e.target.value)}
           placeholder="거래 내용을 입력하세요"
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
@@ -227,31 +268,99 @@ export default function ManualForm() {
         )}
       </div>
 
-      {/* 거래처 + 결제수단 */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* ─── 거래처 정보 ─── */}
+      <div className="border border-gray-100 rounded-xl p-4 space-y-4 bg-gray-50">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">거래처 정보</p>
+
+        {/* 거래처명 + 전화번호 */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">거래처명</label>
+            <input
+              type="text"
+              value={form.vendor}
+              onChange={(e) => set('vendor', e.target.value)}
+              placeholder="상호명"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">전화번호</label>
+            <input
+              type="tel"
+              value={form.vendor_phone}
+              onChange={(e) => set('vendor_phone', e.target.value)}
+              placeholder="02-0000-0000"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            />
+          </div>
+        </div>
+
+        {/* 사업자등록번호 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">거래처</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">사업자등록번호</label>
           <input
             type="text"
-            value={form.vendor}
-            onChange={e => set('vendor', e.target.value)}
-            placeholder="선택 사항"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={form.vendor_reg_number}
+            onChange={(e) => set('vendor_reg_number', e.target.value)}
+            placeholder="000-00-00000"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           />
         </div>
+      </div>
+
+      {/* ─── 결제 정보 ─── */}
+      <div className="border border-gray-100 rounded-xl p-4 space-y-4 bg-gray-50">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">결제 정보</p>
+
+        {/* 결제수단 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">결제 수단</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">결제 수단</label>
           <select
             value={form.payment_method}
-            onChange={e => set('payment_method', e.target.value)}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => set('payment_method', e.target.value)}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           >
             <option value="">선택 사항</option>
-            {PAYMENT_METHODS.map(m => (
+            {PAYMENT_METHODS.map((m) => (
               <option key={m} value={m}>{m}</option>
             ))}
           </select>
         </div>
+
+        {/* 카드사 + 카드번호 (카드 결제 시만 표시) */}
+        {isCardPayment && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">카드사</label>
+              <select
+                value={form.card_company}
+                onChange={(e) => set('card_company', e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="">선택</option>
+                {CARD_COMPANIES.map((c) => (
+                  <option key={c} value={c}>{c}카드</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">카드번호 끝 4자리</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                value={form.card_last4}
+                onChange={(e) => set('card_last4', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                placeholder="1234"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white tracking-widest"
+              />
+              {errors.card_last4 && (
+                <p className="text-red-500 text-xs mt-1">{errors.card_last4}</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 메모 */}
@@ -259,7 +368,7 @@ export default function ManualForm() {
         <label className="block text-sm font-medium text-gray-700 mb-1">메모</label>
         <textarea
           value={form.memo}
-          onChange={e => set('memo', e.target.value)}
+          onChange={(e) => set('memo', e.target.value)}
           rows={2}
           placeholder="선택 사항"
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
